@@ -231,6 +231,16 @@ void charger_set_en_hiz(struct wtchg_info *info,bool en)
 		info->is_hiz = en;
 }
 
+int charger_set_vrechg(struct wtchg_info *info,bool en)
+{
+	unsigned int ret = 0;
+	printc("## set vrechg = %d\n",en);
+	ret = charger_field_write(info, B_VRECHG, en);
+	if (ret < 0)
+		printc("set vrechg failed !!!!!\n");
+	return ret;
+}
+
 void charger_get_en_hiz(struct wtchg_info *info,bool *en)
 {
 	*en = !!charger_field_read(info, B_EN_HIZ);
@@ -759,6 +769,9 @@ static int charger_plug_out(struct charger_device *chg_dev)
 	if(info->slate_mode == 2){
 		info->slate_mode = 0;
 		info->wt_discharging_state &= ~WT_CHARGE_SLATE_MODE_DISCHG;
+	}
+	if(info->batt_full_capacity != 100){
+		info->wt_discharging_state &= ~WT_CHARGE_FULL_CAP_DISCHG;
 	}
 	plug_flag = false;
 	if(!IS_ERR_OR_NULL(mtchg_info)) {
@@ -1321,7 +1334,9 @@ static int charger_init_device(struct wtchg_info *info)
 	ret = charger_get_chip_state(info, &state);
 	if (ret < 0)
 		printc("get chip state failed!\n");
-
+	ret = charger_set_vrechg(info,1);
+	if (ret < 0)
+		printc("set vreg failed!\n");
 	return 0;
 }
 

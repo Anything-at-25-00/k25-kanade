@@ -230,7 +230,8 @@ imgsensor_sensor_open(struct IMGSENSOR_SENSOR *psensor)
 			psensor_inst->state = IMGSENSOR_STATE_OPEN;
 //+S96818AA1-1936,chenming01.wt,ADD,2023/08/02, camera switch distinguishes the flash PWM frequency
 #ifdef CONFIG_MTK_S96818_CAMERA
-			camera_switch = 1;
+			if(psensor_inst->sensor_idx == IMGSENSOR_SENSOR_IDX_MAIN)
+			    camera_switch = 1;
 #endif
 //-S96818AA1-1936,chenming01.wt,ADD,2023/08/02, camera switch distinguishes the flash PWM frequency
 #ifdef CONFIG_MTK_CCU

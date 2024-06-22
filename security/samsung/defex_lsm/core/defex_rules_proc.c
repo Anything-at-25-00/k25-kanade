@@ -337,6 +337,10 @@ __visible_for_testing int load_rules_common(struct file *f, int flags)
 				defex_log_info("Secondary rules have been stored");
 			}
 		}
+#ifdef DEFEX_SHOW_RULES_ENABLE
+		if (policy_data)
+			defex_show_structure((void *)policy_data, rules_size);
+#endif /* DEFEX_SHOW_RULES_ENABLE */
 #ifdef DEFEX_TRUSTED_MAP_ENABLE
 		if (policy_data && !dtm_tree.data) { /* DTM not yet initialized */
 			const unsigned char *dtm_section = find_policy_section(DEFEX_DTM_SECTION_NAME, policy_data, rules_size, 0);
@@ -420,12 +424,7 @@ int __init do_load_rules(void)
 	int res = -1;
 	unsigned int f_index = 0;
 	const struct rules_file_struct *item;
-	static int executed __initdata;
 
-	if (!executed) {
-		memset(packed_rules_primary, 0, sizeof(packed_rules_primary));
-		executed = 1;
-	}
 	if (boot_state_recovery)
 		load_flags |= LOAD_FLAG_RECOVERY;
 
@@ -501,6 +500,7 @@ __visible_for_testing int lookup_tree(const char *file_path, int attribute, stru
 	int l, is_system, forced_load;
 	const int is_recovery = !!(load_flags & LOAD_FLAG_RECOVERY);
 	const unsigned int load_both_mask = (LOAD_FLAG_DPOLICY | LOAD_FLAG_DPOLICY_SYSTEM);
+	int iterator = 0;
 
 	if (!file_path || *file_path != '/')
 		return 0;
@@ -569,7 +569,7 @@ try_not_system:
 		if (next_separator)
 			ptr++;
 	} while (*ptr);
-	if (is_system && ((void *)base_start == (void *)get_rules_ptr(is_system))) {
+	if ((load_flags & load_both_mask) == load_both_mask && ++iterator < 2) {
 		is_system = !is_system;
 		goto try_not_system;
 	}

@@ -574,6 +574,9 @@ skip:
 	mutex_unlock(&cti->chgdet_lock);
 }
 extern kpd_pwk_event(int pressed);
+#ifdef CONFIG_N28_CHARGER_PRIVATE
+bool SRC_TO_SNK = false;
+#endif
 static int pd_tcp_notifier_call(struct notifier_block *pnb,
 				unsigned long event, void *data)
 {
@@ -663,6 +666,9 @@ static int pd_tcp_notifier_call(struct notifier_block *pnb,
 		} else if (noti->typec_state.old_state == TYPEC_ATTACHED_SRC &&
 			noti->typec_state.new_state == TYPEC_ATTACHED_SNK) {
 			pr_info("%s Source_to_Sink\n", __func__);
+#ifdef CONFIG_N28_CHARGER_PRIVATE
+			SRC_TO_SNK = true;
+#endif
 			plug_in_out_handler(cti, true, true);
 		}  else if (noti->typec_state.old_state == TYPEC_ATTACHED_SNK &&
 			noti->typec_state.new_state == TYPEC_ATTACHED_SRC) {
