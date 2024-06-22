@@ -13,6 +13,7 @@ USER_BUILD=false
 
 # Additional debug
 LOG_BUFFER_ENABLE=false
+SHOW_RULES_ENABLE=false
 
 ifeq (,$(TARGET_BUILD_VARIANT))
     ifeq ($(CONFIG_SECURITY_DEFEX_USER),y)
@@ -52,11 +53,15 @@ defex-y += catch_engine/defex_ht.o
 defex-y += defex_rules.o
 defex-$(CONFIG_COMPAT) += catch_engine/defex_catch_list_compat.o
 
-# Immutable Feature is applied with permissive mode first.
-DEFEX_DEFINES := -DDEFEX_PERMISSIVE_IM
-
-# Integrity Feature is applied with permissive mode first.
-DEFEX_DEFINES += -DDEFEX_PERMISSIVE_INT
+ifeq ($(SEC_BUILD_CONF_VENDOR_BUILD_OS), 14)
+    ifeq ($(filter a25x% m53x% m55xq%, $(TARGET_PRODUCT)),)
+        DEFEX_DEFINES := -DDEFEX_PERMISSIVE_IM
+        DEFEX_DEFINES += -DDEFEX_PERMISSIVE_INT
+    endif
+else
+    DEFEX_DEFINES := -DDEFEX_PERMISSIVE_IM
+    DEFEX_DEFINES += -DDEFEX_PERMISSIVE_INT
+endif
 
 ifeq ($(CONFIG_DEFEX_KERNEL_ONLY), y)
     DEFEX_DEFINES += -DDEFEX_KERNEL_ONLY
@@ -75,11 +80,16 @@ ifeq ($(CONFIG_DEFEX_KERNEL_ONLY), y)
         ifeq ($(LOG_BUFFER_ENABLE), true)
             DEFEX_DEFINES += -DDEFEX_LOG_BUFFER_ENABLE
         endif
+	ifeq ($(SHOW_RULES_ENABLE), true)
+	    defex-y += debug/defex_rules_show.o
+	    DEFEX_DEFINES += -DDEFEX_SHOW_RULES_ENABLE
+	endif
     endif
 endif
 
 ifeq ($(SEC_FACTORY_BUILD), true)
     DEFEX_DEFINES += -DDEFEX_FACTORY_ENABLE
+    DEFEX_DEFINES += -DDEFEX_PERMISSIVE_LP
 endif
 
 ifeq ($(PED_ENABLE), true)
@@ -157,6 +167,10 @@ else
     DEFEX_DEFINES += -DDEFEX_DEBUG_ENABLE
     ifeq ($(LOG_BUFFER_ENABLE), true)
         DEFEX_DEFINES += -DDEFEX_LOG_BUFFER_ENABLE
+    endif
+    ifeq ($(SHOW_RULES_ENABLE), true)
+	defex-y += debug/defex_rules_show.o
+	DEFEX_DEFINES += -DDEFEX_SHOW_RULES_ENABLE
     endif
 endif
 

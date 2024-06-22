@@ -771,37 +771,11 @@ static int battery_get_property(struct power_supply *psy,
 		break;
 #ifdef CONFIG_N28_CHARGER_PRIVATE
 	case POWER_SUPPLY_PROP_DIRECT_CHARGING_STATUS:
-		if (batt_hv_disable) {
-			val->intval = 0;
-		} else {
-			chr_type = mt_get_charger_type();
-			if (((chr_type == STANDARD_CHARGER) ||(chr_type == NONSTANDARD_CHARGER ) ) &&
-				(!IS_ERR_OR_NULL(cm)))
-			{
-				#ifdef CONFIG_AFC_CHARGER
-				if (mtk_is_pep_series_connect(cm) || mtk_pdc_check_charger(cm) || afc_get_is_connect(cm)) {
-					val->intval = 0;
-					if (adapter_is_support_pd_pps())
-						val->intval = 1;
-				}
-				else
-					val->intval = 0;
-				#else
-				if (mtk_is_pep_series_connect(cm) || mtk_pdc_check_charger(cm)) {
-					val->intval = 0;
-					if (adapter_is_support_pd_pps())
-						val->intval = 1;
-				}
-				else
-					val->intval = 0;
-				#endif
-			}
-			else
-			{
-				val->intval = 0;
-			}
-		}
-		break;
+	if(POWER_SUPPLY_STATUS_CHARGING == data->BAT_STATUS && adapter_is_support_pd_pps())
+		val->intval = true;
+	else
+		val->intval = false;
+	break;
 #endif
 	case POWER_SUPPLY_PROP_BATT_SLATE_MODE:
 			val->intval = batt_slate_mode; //Bug773947,churui1.wt,set mode 2 for batt_slate_mode node
@@ -813,7 +787,7 @@ static int battery_get_property(struct power_supply *psy,
 		b_ischarging = gauge_get_current(&fgcurrent);
 		if (b_ischarging == false)
 			fgcurrent = 0 - fgcurrent;
-		if (1000 > fgcurrent/10)
+		if ((1000 > fgcurrent/10) || (batt_hv_disable == true))
 			val->strval = "Slow";
 		else
 			val->strval = "Fast";
@@ -908,6 +882,8 @@ static int battery_set_property(struct power_supply *psy,
 
 	switch (psp) {
 	case POWER_SUPPLY_PROP_BATT_SLATE_MODE:
+		if(val->intval == 3)
+			return ret;
 		set_batt_slate_mode(&pval);
 		batt_slate_mode = val->intval; //Bug773947,churui1.wt,set mode 2 for batt_slate_mode node
 		break;

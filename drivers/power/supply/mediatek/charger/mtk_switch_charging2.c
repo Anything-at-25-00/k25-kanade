@@ -266,32 +266,39 @@ static void swchg_select_charging_current_limit(struct charger_manager *info)
 	} else if (info->chr_type == STANDARD_HOST) {
 		if (IS_ENABLED(CONFIG_USBIF_COMPLIANCE)) {
 #if defined(CONFIG_WT_PROJECT_S96902AA1) //usb if
-			if (info->usb_state == USB_SUSPEND) {
-				charger_dev_enable_powerpath(info->chg1_dev,false);
-				pdata->input_current_limit =
-					info->data.usb_charger_current_suspend;
-				chr_err("powerpatch flase input_current_limit =%d,info->usb_state = %d\n",pdata->input_current_limit,info->usb_state);
-			} else if (info->usb_state == USB_UNCONFIGURED) {
-				charger_dev_enable_powerpath(info->chg1_dev,true);
-				pdata->input_current_limit =
-				info->data.usb_charger_current_unconfigured;
-				chr_err("powerpatch en input_current_limit =%d,info->usb_state = %d\n",pdata->input_current_limit,info->usb_state);
-			} else if (info->usb_state == USB_CONFIGURED) {
-				charger_dev_enable_powerpath(info->chg1_dev,true);
-				pdata->input_current_limit =
-				info->data.usb_charger_current_configured;
-				chr_err("powerpatch en input_current_limit =%d,info->usb_state = %d\n",pdata->input_current_limit,info->usb_state);
-			} else {
-				charger_dev_enable_powerpath(info->chg1_dev,true);
-				pdata->input_current_limit =
-				info->data.usb_charger_current_unconfigured;
-				chr_err("powerpatch en input_current_limit =%d,info->usb_state = %d\n",pdata->input_current_limit,info->usb_state);
+			if(boot_mode != KERNEL_POWER_OFF_CHARGING_BOOT){
+				if (info->usb_state == USB_SUSPEND) {
+					charger_dev_enable_powerpath(info->chg1_dev,false);
+					pdata->input_current_limit =
+						info->data.usb_charger_current_suspend;
+					chr_err("powerpatch flase input_current_limit =%d,info->usb_state = %d\n",pdata->input_current_limit,info->usb_state);
+				} else if (info->usb_state == USB_UNCONFIGURED) {
+					charger_dev_enable_powerpath(info->chg1_dev,true);
+					pdata->input_current_limit =
+					info->data.usb_charger_current_unconfigured;
+					chr_err("powerpatch en input_current_limit =%d,info->usb_state = %d\n",pdata->input_current_limit,info->usb_state);
+				} else if (info->usb_state == USB_CONFIGURED) {
+					charger_dev_enable_powerpath(info->chg1_dev,true);
+					pdata->input_current_limit =
+					info->data.usb_charger_current_configured;
+					chr_err("powerpatch en input_current_limit =%d,info->usb_state = %d\n",pdata->input_current_limit,info->usb_state);
+				} else {
+					charger_dev_enable_powerpath(info->chg1_dev,true);
+					pdata->input_current_limit =
+					info->data.usb_charger_current_unconfigured;
+					chr_err("powerpatch en input_current_limit =%d,info->usb_state = %d\n",pdata->input_current_limit,info->usb_state);
+				}
+				pdata->charging_current_limit =
+						pdata->input_current_limit;
 			}
-			pdata->charging_current_limit =
-					pdata->input_current_limit;
+			else{
+				pdata->input_current_limit = 500000;
+				pdata->charging_current_limit = 500000;
+			}
 		} else {
 			//charger_dev_enable_hz(info->chg1_dev, 0);
 			charger_dev_enable_powerpath(info->chg1_dev,true);
+
 			pdata->input_current_limit =
 					info->data.usb_charger_current;
 			/* it can be larger */
@@ -1093,29 +1100,30 @@ static int mtk_switch_chr_cc(struct charger_manager *info)
 				g_cp_charging.cp_chg_status &= ~CP_EXIT;
 			} else {
 				g_cp_charging.cp_chg_status |= CP_EXIT;
+				chr_err("AP temp higher than 45 exit CP charging \n");
 			}
 		} else { //no CP charging when lcd is on
 			g_cp_charging.cp_chg_status |= CP_EXIT;
+			g_cp_charging.cp_chg_status |= CP_REENTER;
+			chr_err("Lcm on -> Lcm off re-enter cp\n");
 		}
 #else
 		g_cp_charging.cp_chg_status &= ~CP_EXIT; //don't exit cp on ATO version
 #endif
 		if (!(g_cp_charging.cp_chg_status & CP_EXIT) &&
 			!(g_cp_charging.cp_chg_status & CP_DONE)) {
-
 			if (g_cp_charging.cp_chg_status & CP_REENTER) {
 				g_cp_charging.cp_chg_status &= ~CP_REENTER;
+				cancel_work_sync(&__pdpm->usb_psy_change_work);
 				schedule_work(&__pdpm->usb_psy_change_work);
 				chr_err("CP Reenter!\n");
 			}
-
 			charger_dev_enable(info->chg1_dev, false);
 			chr_err("CP charging!\n");
 			return 0;
 		} else { //when cp done, keep cp exit
 			g_cp_charging.cp_chg_status |= CP_EXIT;
 		}
-
 		info->leave_pdc = 1; //doesn't enter PDC when CP not charged
 	}
 #endif
