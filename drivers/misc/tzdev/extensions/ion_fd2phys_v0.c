@@ -73,11 +73,7 @@ static long __ionfd2phys_ioctl(int fd, size_t nr_pfns, sk_pfn_t *pfns)
 	int pfn;
 	size_t size = 0;
 
-#if defined(CONFIG_MACH_MT6853)
 	handle = ion_import_dma_buf_fd(client, fd);
-#else
-	handle = ion_import_dma_buf(client, fd);
-#endif
 
 	if (IS_ERR_OR_NULL(handle)) {
 		pr_err("Failed to import an ION FD\n");
