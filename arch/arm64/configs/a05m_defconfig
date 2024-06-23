@@ -4,12 +4,12 @@
 #
 
 #
-# Compiler: Android (6443078 based on r383902) clang version 11.0.1 (https://android.googlesource.com/toolchain/llvm-project b397f81060ce6d701042b782172ed13bee898b79)
+# Compiler: Android (10087095, +pgo, +bolt, +lto, -mlgo, based on r487747c) clang version 17.0.2 (https://android.googlesource.com/toolchain/llvm-project d9f89f4d16663d5012e5c09495f3b30ece3d2362)
 #
 CONFIG_GCC_VERSION=0
 CONFIG_CC_IS_CLANG=y
 CONFIG_LD_IS_LLD=y
-CONFIG_CLANG_VERSION=110001
+CONFIG_CLANG_VERSION=170002
 CONFIG_CC_HAS_ASM_GOTO=y
 CONFIG_TOOLS_SUPPORT_RELR=y
 CONFIG_IRQ_WORK=y
@@ -5260,10 +5260,8 @@ CONFIG_DEFAULT_SECURITY="selinux"
 # Memory initialization
 #
 CONFIG_CC_HAS_AUTO_VAR_INIT_PATTERN=y
-CONFIG_CC_HAS_AUTO_VAR_INIT_ZERO=y
 CONFIG_INIT_STACK_NONE=y
 # CONFIG_INIT_STACK_ALL_PATTERN is not set
-# CONFIG_INIT_STACK_ALL_ZERO is not set
 # CONFIG_INIT_ON_ALLOC_DEFAULT_ON is not set
 # CONFIG_INIT_ON_FREE_DEFAULT_ON is not set
 CONFIG_CRYPTO=y
